@@ -1,2 +1,4 @@
 # tests before implementation
 test.py 
+*.html
+*.css
