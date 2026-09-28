@@ -1,25 +1,23 @@
-import tkinter as tk
-from tkinter import Tk, ttk
+from tkinter import Tk, ttk, StringVar
 class Calc:
-    __button_text = ["<-", "CE", "C", "/", 
-                     "7", "8", "9", "x", 
-                     "4", "5", "6", "-",
-                     "1", "2", "3", "+",
-                     "+/-", "0", ".", "="]
+    # this private class list holds the text/image, row, and column
+    __button_text = [("<-", 0, 0), ("CE", 0, 1), ("C", 0, 2), ("/", 0, 3), 
+                     ("7", 1, 0), ("8", 1, 1), ("9", 1, 2), ("x", 1, 3), 
+                     ("4", 2, 0), ("5", 2, 1), ("6", 2, 2), ("-", 2, 3),
+                     ("1", 3, 0), ("2", 3, 1), ("3", 3, 2), ("+", 3, 3),
+                     ("+/-", 4, 0), ("0", 4, 1), (".", 4, 2), ("=", 4, 3)]
 
     # configuration options for the calculator
-    PADDING_SM = 8
-    PADDING_BASE = 12
-    PADDING_LG = 16
+    PADDING_SM = 1
+    PADDING_BASE = 2
+    PADDING_LG = 4
 
-    MARGIN_SM = 5
-    MARGIN_BASE = 20
-    MARGIN_LG = 22
+    MARGIN_SM = 2
+    MARGIN_BASE = 5
+    MARGIN_LG = 10
 
     FONT_SIZE_TERTIARY = 16
-    FONT_SIZE_SECONDARY = 18
-
-    CALC_WIDTH = 100
+    FONT_SIZE_SECONDARY = -16
 
     # Tk uses a font description such as {courier 10 bold}; 
     # in tkinter this is most naturally passed as a 
@@ -29,82 +27,87 @@ class Calc:
     # sizes with negative numbers are measured in pixels.
     #  - https://docs.python.org/3/library/tkinter.html#handy-reference
 
-    FONT_SIZE_PRIMARY = -24
+    FONT_SIZE_PRIMARY = -20
 
     FONT_PRIMARY = ("Helvetica", FONT_SIZE_PRIMARY, "bold")
+    FONT_SECONDARY = ("Helvetica", FONT_SIZE_SECONDARY, "bold")
 
-    DISPLAY_WIDTH = 50 # had to tone down the size, cos I thought I was working with pixels :(
+    DISPLAY_WIDTH = 300 
+    DISPLAY_HEIGHT = 300 
     
     def __init__(self) -> None:
         self.root = Tk()
-        self.root.title("Calc")
-        # self.root.geometry("640x480")
-        self.frame = ttk.Frame(self.root, padding=Calc.MARGIN_SM)
-        print(self.frame.winfo_width())
-        self.frame.grid()
+        self.root.title("Calculator")
+        self.root.configure(pady=5)
+
+
+        # Window size settings
+        self.root.resizable(False, False) # disabled resizing for now
+        self.center_window()
+        
+
+        # Opacity control for the calc window
+        self.root.attributes(alpha=0.95)
+
+
+        self.display_frame = ttk.Frame(self.root)
+        self.display_frame.pack(side="top", fill="both", expand=True, padx=Calc.MARGIN_LG, pady=Calc.MARGIN_BASE)
+
+        self.button_frame = ttk.Frame(self.root)
+        self.button_frame.pack(side="bottom", fill="both", expand=True, padx=Calc.MARGIN_LG, pady=Calc.MARGIN_BASE)
 
         # style control for ttk widgets
         self.style = ttk.Style()
-        self.style.configure("TButton", ) 
+        self.style.configure("TButton", font=Calc.FONT_SECONDARY) 
 
         # calculator display
-        self.input_val = tk.StringVar(self.root, value="0")
+        self.input_val = StringVar(self.root, value="0")
 
         # TEntry has a weird quirk that does not allow some of its options to be changed 
         # via ttk.Style, so I opted for using its keyword arguments on creation. 
         # I see a future of pain for this component's customizability ^-^
-        self.display = ttk.Entry(self.frame, textvariable=self.input_val, 
+        self.display = ttk.Entry(self.display_frame, textvariable=self.input_val, 
                                   justify="right",
                                  font=Calc.FONT_PRIMARY)
 
-        # calculator buttons
-        self.backspace = self.make_btn(Calc.__button_text[0])
-        self.clear_entry = self.make_btn(Calc.__button_text[1])
-        self.clear_screen = self.make_btn(Calc.__button_text[2])
-        self.divide_sign = self.make_btn(Calc.__button_text[3])
-        self.no_seven = self.make_btn(Calc.__button_text[4])
-        self.no_eight = self.make_btn(Calc.__button_text[5])
-        self.no_nine = self.make_btn(Calc.__button_text[6])
-        self.multiply_sign = self.make_btn(Calc.__button_text[7])
-        self.no_four = self.make_btn(Calc.__button_text[8])
-        self.no_five = self.make_btn(Calc.__button_text[9])
-        self.no_six = self.make_btn(Calc.__button_text[10])
-        self.minus_sign = self.make_btn(Calc.__button_text[11])
-        self.no_one = self.make_btn(Calc.__button_text[12])
-        self.no_two = self.make_btn(Calc.__button_text[13])
-        self.no_three = self.make_btn(Calc.__button_text[14])
-        self.plus_sign = self.make_btn(Calc.__button_text[15])
-        self.polarity = self.make_btn(Calc.__button_text[16])
-        self.zero = self.make_btn(Calc.__button_text[17])
-        self.decimal_point = self.make_btn(Calc.__button_text[18])
-        self.equal_sign = self.make_btn(Calc.__button_text[19])
+        self.show_elements()
 
-    def make_btn(self, btn_text: str):
-        return ttk.Button(self.frame, text=btn_text)
+    def make_btns(self):
+        # Configure grid row/column weights so buttons expand evenly - Thanks Gemini :)
+        # Without this loop, the grid within the button frame will not 
+        # expand when the window of the app is maximized or resized.
+        for i in range(4):
+            self.button_frame.columnconfigure(i, weight=1)
+            self.button_frame.rowconfigure(i, weight=1)
+            if i == 3:
+                self.button_frame.rowconfigure(i+1, weight=1)
+
+        # Add buttons to the calculator and display them
+        for text, row, column in Calc.__button_text:
+            btn = ttk.Button(self.button_frame, text=text)
+            btn.grid(row=row, column=column, ipadx=Calc.PADDING_BASE, ipady=Calc.PADDING_LG, sticky="nsew")
+
+    def center_window(self):
+        # I need to be more patient with the tkinter doc, thanks Gemini again :>
+        # Get the user's screen width and height through self.root
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Calculate x and y coordinates for centering
+        x = (screen_width - Calc.DISPLAY_WIDTH) // 2
+        y = (screen_height - Calc.DISPLAY_HEIGHT) // 2
+
+
+        # center the window using x and y as offsets
+        self.root.geometry(f"{self.DISPLAY_WIDTH}x{Calc.DISPLAY_HEIGHT}"
+                           f"+{x}+{y}")
 
     def show_elements(self):
-        self.display.grid(column=0, row=0, columnspan=4, ipadx=Calc.PADDING_LG)
-        self.backspace.grid(column=0, row=1)
-        self.clear_entry.grid(column=1, row=1)
-        self.clear_screen.grid(column=2, row=1)
-        self.divide_sign.grid(column=3, row=1)
-        self.no_seven.grid(column=0, row=2)
-        self.no_eight.grid(column=1, row=2)
-        self.no_nine.grid(column=2, row=2)
-        self.multiply_sign.grid(column=3, row=2)
-        self.no_four.grid(column=0, row=3)
-        self.no_five.grid(column=1, row=3)
-        self.no_six.grid(column=2, row=3)
-        self.minus_sign.grid(column=3, row=3)
-        self.no_one.grid(column=0, row=4)
-        self.no_two.grid(column=1, row=4)
-        self.no_three.grid(column=2, row=4)
-        self.plus_sign.grid(column=3, row=4)
-        self.polarity.grid(column=0, row=5)
-        self.zero.grid(column=1, row=5)
-        self.decimal_point.grid(column=2, row=5)
-        self.equal_sign.grid(column=3, row=5)
-
+        # .grid(column=0, row=0, columnspan=4, ipadx=Calc.PADDING_LG)
+        # expand=True, ipadx=Calc.PADDING_LG
+        self.display.pack(expand=True, fill="both")
+        self.make_btns()
+        
     def run(self):
         self.show_elements()
         self.root.mainloop()
