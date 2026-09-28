@@ -2,3 +2,6 @@
 test.py 
 *.html
 *.css
+assets/*
+!assets/delete-back-2-line (1).png
+!assets/credits.txt
